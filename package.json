@@ -1,0 +1,27 @@
+{
+  "name": "graphql_boilerplate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@graphql-tools/schema": "^8.3.13",
+    "@prisma/client": "^3.14.0",
+    "apollo-server-core": "^3.8.1",
+    "apollo-server-express": "^3.8.1",
+    "bcryptjs": "^2.4.3",
+    "express": "^4.18.1",
+    "graphql": "^16.5.0",
+    "graphql-subscriptions": "^2.0.0",
+    "graphql-ws": "^5.8.2",
+    "jsonwebtoken": "^8.5.1",
+    "prisma": "^3.14.0",
+    "subscriptions-transport-ws": "^0.11.0",
+    "ws": "^8.7.0"
+  }
+}
