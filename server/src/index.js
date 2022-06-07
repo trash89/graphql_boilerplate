@@ -1,7 +1,19 @@
+const cors = require("cors");
+const dotenv = require("dotenv");
+dotenv.config();
+const morgan = require("morgan");
+
+const { fileURLToPath } = require("url");
+
+const helmet = require("helmet");
+const xss = require("xss-clean");
+const mongoSanitize = require("express-mongo-sanitize");
+
 const { createServer } = require("http");
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { dirname } = require("path");
 const { PrismaClient } = require("@prisma/client");
 
 const { ApolloServer } = require("apollo-server-express");
@@ -20,6 +32,7 @@ const Query = require("./resolvers/Query");
 const Mutation = require("./resolvers/Mutation");
 const User = require("./resolvers/User");
 const Link = require("./resolvers/Link");
+const Vote = require("./resolvers/Vote");
 const Subscription = require("./resolvers/Subscription");
 
 const prisma = new PrismaClient();
@@ -32,6 +45,7 @@ const resolvers = {
   Subscription,
   User,
   Link,
+  Vote,
 };
 const typeDefs = fs.readFileSync(
   path.join(__dirname, "schema.graphql"),
@@ -44,6 +58,19 @@ const schema = makeExecutableSchema({
 
 async function startApolloServer() {
   const app = express();
+  app.use(cors());
+  if (process.env.NODE_ENV !== "production") {
+    app.use(morgan("dev"));
+  }
+  //const __dirname = dirname(fileURLToPath(import.meta.url));
+  app.use(express.static(path.resolve(__dirname, "./client/build")));
+  //app.use(express.json());
+  app.use(helmet());
+  app.use(xss());
+  app.use(mongoSanitize());
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "./client/build", "index.html"));
+  });
   const httpServer = createServer(app);
 
   const server = new ApolloServer({
@@ -78,16 +105,27 @@ async function startApolloServer() {
       execute,
       subscribe,
       async onConnect(connectionParams, webSocket, context) {
-        return {
-          ...context.req,
-          prisma,
-          pubsub,
-          userId:
-            context.req && context.req.headers.authorization
-              ? getUserId(context.req)
-              : null,
-        };
+        if (connectionParams.authToken) {
+          return {
+            prisma,
+            userId: getUserId(null, connectionParams.authToken),
+          };
+        } else {
+          return {
+            prisma,
+          };
+        }
       },
+      //   return {
+      //     ...context.req,
+      //     prisma,
+      //     pubsub,
+      //     userId:
+      //       context.req && context.req.headers.authorization
+      //         ? getUserId(context.req)
+      //         : null,
+      //   };
+      // },
     },
     {
       server: httpServer,
